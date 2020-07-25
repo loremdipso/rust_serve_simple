@@ -118,13 +118,13 @@ fn serve_file(filepath: String) -> std::io::Result<Response> {
 		Some(extension) => {
 			println!("Extension: {:?}", &extension);
 
-			if extension == ".js" {
+			if extension == "js" {
 				file_type = "text/javascript";
-			} else if extension == ".html" {
+			} else if extension == "html" {
 				file_type = "text/html";
-			} else if extension == ".swf" {
+			} else if extension == "swf" {
 				file_type = "application/x-shockwave-flash";
-			} else if extension == ".css" {
+			} else if extension == "css" {
 				file_type = "text/css";
 			}
 		}
