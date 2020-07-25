@@ -1,11 +1,9 @@
 use crossbeam_channel::{unbounded, Receiver};
-use rouille::Request;
 use rouille::Response;
-use serde_json::json;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::os::unix::net::{UnixListener, UnixStream};
-use std::{env, fs::File, thread};
+use std::{env, fs::File, path::Path, thread};
 
 fn main() {
 	let http_port = 1225;
@@ -108,13 +106,31 @@ fn start_server(socket_path: String, http_port: i32) {
 fn do_ping(r: &Receiver<String>) -> Response {
 	let files_to_open: Vec<_> = r.try_iter().collect();
 	dbg!("Received: {}", &files_to_open);
-	return Response::text(json!(&files_to_open).to_string());
+	return Response::json(&files_to_open);
 }
 
 fn serve_file(filepath: String) -> std::io::Result<Response> {
 	println!("Trying to serve {}...", filepath);
-	let mut file = File::open(filepath)?;
-	let mut contents = String::new();
-	file.read_to_string(&mut contents)?;
-	return Ok(Response::text(contents));
+	let file = File::open(&filepath)?;
+	let result = Path::new(&filepath).extension();
+	let mut file_type = "text/plain";
+	match result {
+		Some(extension) => {
+			println!("Extension: {:?}", &extension);
+
+			if extension == ".js" {
+				file_type = "text/javascript";
+			} else if extension == ".html" {
+				file_type = "text/html";
+			} else if extension == ".swf" {
+				file_type = "application/x-shockwave-flash";
+			} else if extension == ".css" {
+				file_type = "text/css";
+			}
+		}
+		None => {
+			println!("No extension on {}", &filepath);
+		}
+	}
+	return Ok(Response::from_file(file_type, file));
 }
